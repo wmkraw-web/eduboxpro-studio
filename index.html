@@ -6,6 +6,10 @@
     <title>EduBoxPro Studio - AI & Edukacja</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Klasyczne biblioteki React -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
@@ -18,16 +22,40 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
-        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
-        import { 
-          Sparkles, Video, Copy, Wand2, LayoutTemplate, 
-          Settings, Camera, Lightbulb, PlaySquare, Check,
-          Gamepad2, Trophy, PartyPopper, Image as ImageIcon,
-          Aperture, PenTool, Layers, MousePointerClick, Film,
-          Globe, Ban, Languages, Coffee
-        } from 'https://esm.sh/lucide-react@0.292.0';
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { createRoot } = ReactDOM;
+
+        // --- NIEZAWODNE, WBUDOWANE KOMPONENTY IKON (Zastępują zewnętrzną bibliotekę) ---
+        const SvgIcon = ({ children, className }) => (
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            {children}
+          </svg>
+        );
+
+        const Sparkles = ({className}) => <SvgIcon className={className}><path d="m4 14 1.5 1.5M10 14l1.5-1.5M4 10l1.5-1.5M10 10l1.5 1.5M10.5 21l3-10.5L21 7.5l-7.5 3-3 10.5Z"/></SvgIcon>;
+        const Video = ({className}) => <SvgIcon className={className}><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></SvgIcon>;
+        const Copy = ({className}) => <SvgIcon className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></SvgIcon>;
+        const Wand2 = ({className}) => <SvgIcon className={className}><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.21 1.21 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></SvgIcon>;
+        const LayoutTemplate = ({className}) => <SvgIcon className={className}><rect width="18" height="7" x="3" y="3" rx="1"/><rect width="9" height="7" x="3" y="14" rx="1"/><rect width="5" height="7" x="16" y="14" rx="1"/></SvgIcon>;
+        const Settings = ({className}) => <SvgIcon className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
+        const Camera = ({className}) => <SvgIcon className={className}><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></SvgIcon>;
+        const Lightbulb = ({className}) => <SvgIcon className={className}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></SvgIcon>;
+        const PlaySquare = ({className}) => <SvgIcon className={className}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="m9 8 6 4-6 4Z"/></SvgIcon>;
+        const Check = ({className}) => <SvgIcon className={className}><path d="M20 6 9 17l-5-5"/></SvgIcon>;
+        const Gamepad2 = ({className}) => <SvgIcon className={className}><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/></SvgIcon>;
+        const Trophy = ({className}) => <SvgIcon className={className}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></SvgIcon>;
+        const PartyPopper = ({className}) => <SvgIcon className={className}><path d="M5.8 11.3 2 22l10.7-3.79"/><path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/><path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/><path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/><path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7"/><path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/></SvgIcon>;
+        const ImageIcon = ({className}) => <SvgIcon className={className}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></SvgIcon>;
+        const Aperture = ({className}) => <SvgIcon className={className}><circle cx="12" cy="12" r="10"/><path d="m14.31 8 5.74 9.94"/><path d="M9.69 8h11.48"/><path d="m7.38 12 5.74-9.94"/><path d="M9.69 16 3.95 6.06"/><path d="M14.31 16H2.83"/><path d="m16.62 12-5.74 9.94"/></SvgIcon>;
+        const PenTool = ({className}) => <SvgIcon className={className}><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/></SvgIcon>;
+        const Layers = ({className}) => <SvgIcon className={className}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></SvgIcon>;
+        const MousePointerClick = ({className}) => <SvgIcon className={className}><path d="M14 4.1 12 6"/><path d="m5.1 8-2.9-.8"/><path d="m6 12-1.9 2"/><path d="M7.2 2.2 8 5.1"/><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"/></SvgIcon>;
+        const Film = ({className}) => <SvgIcon className={className}><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></SvgIcon>;
+        const Globe = ({className}) => <SvgIcon className={className}><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></SvgIcon>;
+        const Ban = ({className}) => <SvgIcon className={className}><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></SvgIcon>;
+        const Languages = ({className}) => <SvgIcon className={className}><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></SvgIcon>;
+        const Coffee = ({className}) => <SvgIcon className={className}><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></SvgIcon>;
 
         // KOMPONENT POMOCNICZY: Przyciski wyboru języka
         const LanguageToggle = ({ lang, setLang }) => (
@@ -84,12 +112,12 @@
             }
           });
 
-          // Aktualizacja z ręcznego wpisywania (wpisuje to samo do PL i EN by uniknąć pustych pól przy przełączeniu)
+          // Aktualizacja z ręcznego wpisywania
           const handleManualInput = (field, value) => {
             setData(prev => ({ ...prev, [field]: { pl: value, en: value } }));
           };
 
-          // Aktualizacja po kliknięciu w chmurkę (pobiera poprawne wersje PL i EN)
+          // Aktualizacja po kliknięciu w chmurkę
           const handleChipClick = (field, opt) => {
             setData(prev => ({ ...prev, [field]: { pl: opt.pl, en: opt.en } }));
           };
@@ -112,7 +140,6 @@
             setTimeout(() => setCopied(false), 2000);
           };
 
-          // Chmurki ZAWSZE wyświetlają tekst polski (opt.pl)
           const SuggestionChips = ({ field, options }) => (
             <div className="flex flex-wrap gap-1.5 mt-2">
               {options.map((opt, i) => (
@@ -198,7 +225,7 @@
                 </div>
               </div>
 
-              {/* PRAWY PANEL WYNIKOWY (PRZEŁĄCZANIE JĘZYKA) */}
+              {/* PRAWY PANEL WYNIKOWY */}
               <div className="w-full md:w-1/2 flex flex-col gap-4">
                 <div className="bg-gradient-to-br from-fuchsia-900 to-slate-900 rounded-2xl p-6 shadow-xl text-white flex-1 flex flex-col relative overflow-hidden">
                   <ImageIcon className="absolute -right-10 -bottom-10 w-48 h-48 text-fuchsia-500 opacity-10" />
@@ -407,7 +434,7 @@
         };
 
 
-        // --- KOMPONENT 3: INTERAKTYWNA GRA (BEZ ZMIAN) ---
+        // --- KOMPONENT 3: INTERAKTYWNA GRA ---
         const PreschoolGame = () => {
           const [score, setScore] = useState(0);
           const [currentItem, setCurrentItem] = useState(null);
@@ -483,7 +510,7 @@
         };
 
 
-        // --- KOMPONENT 4: INTERAKTYWNA ANIMACJA CANVAS (BEZ ZMIAN) ---
+        // --- KOMPONENT 4: INTERAKTYWNA ANIMACJA CANVAS ---
         const ParticleAnimation = () => {
           const canvasRef = useRef(null);
 
@@ -562,16 +589,14 @@
         };
 
 
-        // --- GŁÓWNY KONTENER APLIKACJI (KOMBAJN) ---
+        // --- GŁÓWNY KONTENER APLIKACJI ---
         const EduBoxProShowcase = () => {
           const [activeTab, setActiveTab] = useState('graphic');
 
           return (
             <div className="min-h-screen bg-slate-50 font-sans p-4 md:p-8 flex flex-col items-center justify-start overflow-hidden">
               
-              {/* Zaktualizowany nagłówek z przyciskiem Postaw Kawę */}
               <div className="w-full max-w-7xl mb-6 flex flex-col xl:flex-row items-center justify-between gap-6">
-                
                 <div className="flex flex-col md:flex-row w-full xl:w-auto items-center justify-between gap-4">
                   <div className="text-center xl:text-left">
                     <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight flex items-center justify-center xl:justify-start gap-3">
@@ -583,7 +608,6 @@
                     <p className="text-slate-500 mt-2 font-medium">Zaawansowany kombajn narzędzi AI i Edukacyjnych</p>
                   </div>
                   
-                  {/* Przycisk Postaw Kawę widoczny na mniejszych ekranach pod tytułem, a na dużych na końcu paska */}
                   <div className="xl:hidden mt-2">
                     <a href="https://buycoffee.to/magiccolor" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#ffdd00] hover:bg-[#ffea4d] text-slate-800 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all border border-[#f5d400]">
                       <Coffee className="w-5 h-5" />
@@ -593,7 +617,6 @@
                 </div>
 
                 <div className="flex items-center gap-4">
-                  {/* Nawigacja */}
                   <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-200 flex flex-wrap gap-1 justify-center shrink-0">
                     <button onClick={() => setActiveTab('graphic')} className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'graphic' ? 'bg-fuchsia-50 text-fuchsia-700 shadow-sm border border-fuchsia-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
                       <ImageIcon className="w-4 h-4" /> <span className="hidden sm:inline">Grafika AI</span><span className="sm:hidden">Grafika</span>
@@ -610,7 +633,6 @@
                     </button>
                   </div>
                   
-                  {/* Przycisk Postaw Kawę na dużych ekranach */}
                   <a href="https://buycoffee.to/magiccolor" target="_blank" rel="noopener noreferrer" className="hidden xl:flex items-center gap-2 bg-[#ffdd00] hover:bg-[#ffea4d] text-slate-800 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all border border-[#f5d400] shrink-0">
                     <Coffee className="w-5 h-5" />
                     Postaw Kawę
@@ -628,7 +650,6 @@
           );
         };
 
-        // URUCHOMIENIE APLIKACJI
         const root = createRoot(document.getElementById('root'));
         root.render(<EduBoxProShowcase />);
     </script>
