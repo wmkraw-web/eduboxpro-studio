@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduBoxPro Studio - AI & Edukacja</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { margin: 0; background-color: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+        import { 
+          Sparkles, Video, Copy, Wand2, LayoutTemplate, 
+          Settings, Camera, Lightbulb, PlaySquare, Check,
+          Gamepad2, Trophy, PartyPopper, Image as ImageIcon,
+          Aperture, PenTool, Layers, MousePointerClick, Film,
+          Globe, Ban, Languages, Coffee
+        } from 'https://esm.sh/lucide-react@0.292.0';
+
+        // KOMPONENT POMOCNICZY: Przyciski wyboru języka
+        const LanguageToggle = ({ lang, setLang }) => (
+          <div className="flex bg-slate-800/50 p-1 rounded-xl border border-slate-600 shadow-inner w-fit">
+            <button 
+              onClick={() => setLang('pl')}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${lang === 'pl' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-300 hover:text-white'}`}
+            >
+              🇵🇱 Polski
+            </button>
+            <button 
+              onClick={() => setLang('en')}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${lang === 'en' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-300 hover:text-white'}`}
+            >
+              🇬🇧 English
+            </button>
+          </div>
+        );
+
+        // --- KOMPONENT 1: GENERATOR PROMPTÓW GRAFICZNYCH ---
+        const GraphicPromptGenerator = () => {
+          const [copied, setCopied] = useState(false);
+          const [lang, setLang] = useState('pl'); // 'pl' lub 'en'
+
+          // Stan zoptymalizowany dla dwóch języków
+          const [data, setData] = useState({
+            subject: { 
+              pl: "urocza przedszkolanka czytająca magiczną, świecącą książkę szczęśliwym dzieciom", 
+              en: "cute preschool teacher reading a magical glowing book to happy children" 
+            },
+            ethnicity: { 
+              pl: "typowy Europejczyk z Europy środkowej, słowiańska uroda, jasna karnacja", 
+              en: "typical Central European appearance, Slavic features, Caucasian, fair skin" 
+            },
+            medium: { 
+              pl: "ilustracja 3D w stylu Disney Pixar", 
+              en: "3D Disney Pixar style illustration" 
+            },
+            environment: { 
+              pl: "przytulna biblioteka z unoszącymi się kolorowymi literami", 
+              en: "cozy library with floating colorful letters" 
+            },
+            lighting: { 
+              pl: "miękkie, ciepłe światło słoneczne wpadające przez okno", 
+              en: "soft warm sunlight coming through the window, cinematic lighting" 
+            },
+            quality: { 
+              pl: "rozdzielczość 8k, wysoka szczegółowość, arcydzieło", 
+              en: "8k resolution, highly detailed, masterpiece, trending on artstation" 
+            },
+            negative: { 
+              pl: "napisy, tekst, litery, tablice z tekstem, logo, znaki wodne, zniekształcone twarze", 
+              en: "text, letters, fonts, signboards, watermarks, logo, signatures, deformed faces, extra fingers" 
+            }
+          });
+
+          // Aktualizacja z ręcznego wpisywania (wpisuje to samo do PL i EN by uniknąć pustych pól przy przełączeniu)
+          const handleManualInput = (field, value) => {
+            setData(prev => ({ ...prev, [field]: { pl: value, en: value } }));
+          };
+
+          // Aktualizacja po kliknięciu w chmurkę (pobiera poprawne wersje PL i EN)
+          const handleChipClick = (field, opt) => {
+            setData(prev => ({ ...prev, [field]: { pl: opt.pl, en: opt.en } }));
+          };
+
+          const generatePrompt = () => {
+            if (lang === 'pl') {
+              let p = `${data.medium.pl}, obiekt: ${data.subject.pl} (pochodzenie/wygląd: ${data.ethnicity.pl}), sceneria: ${data.environment.pl}, oświetlenie: ${data.lighting.pl}, jakość: ${data.quality.pl}.`;
+              if (data.negative.pl) p += `\n\n(BARDZO WAŻNE - CZEGO UNIKAĆ I NIE RYSOWAĆ: ${data.negative.pl})`;
+              return p;
+            } else {
+              let p = `${data.medium.en}, ${data.subject.en} (${data.ethnicity.en}), set in ${data.environment.en}, ${data.lighting.en}, ${data.quality.en}.`;
+              if (data.negative.en) p += `\n\nNEGATIVE PROMPT: ${data.negative.en}`;
+              return p;
+            }
+          };
+
+          const handleCopy = () => {
+            navigator.clipboard.writeText(generatePrompt());
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          };
+
+          // Chmurki ZAWSZE wyświetlają tekst polski (opt.pl)
+          const SuggestionChips = ({ field, options }) => (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {options.map((opt, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleChipClick(field, opt)}
+                  className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-100 rounded-full hover:bg-fuchsia-500 hover:text-white transition-all duration-200"
+                >
+                  {opt.pl}
+                </button>
+              ))}
+            </div>
+          );
+
+          return (
+            <div className="w-full h-full flex flex-col md:flex-row gap-6 overflow-hidden">
+              {/* LEWY PANEL (ZAWSZE PO POLSKU) */}
+              <div className="w-full md:w-1/2 bg-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col gap-5 overflow-y-auto custom-scrollbar">
+                
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-2 border-b border-gray-100 pb-4">
+                  <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                    <ImageIcon className="w-6 h-6 text-fuchsia-500" /> Kreator Grafiki AI
+                  </h2>
+                </div>
+
+                {/* BOHATER */}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1"><PenTool className="w-3 h-3"/> Co widzimy na obrazku?</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-fuchsia-500 outline-none transition-all" value={data.subject.pl} onChange={(e) => handleManualInput('subject', e.target.value)} />
+                  <SuggestionChips field="subject" options={[
+                    { pl: "urocze dziecko przedszkolne", en: "cute preschool child" },
+                    { pl: "uśmiechnięta nauczycielka", en: "smiling female teacher" },
+                    { pl: "grupa dzieci bawiąca się klockami", en: "group of children playing with blocks" },
+                    { pl: "przyjazny pluszowy miś", en: "friendly teddy bear" }
+                  ]} />
+                </div>
+
+                {/* POCHODZENIE / ETNICZNOŚĆ */}
+                <div>
+                  <label className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1.5 flex items-center gap-1"><Globe className="w-3 h-3"/> Pochodzenie / Uroda (Zapobiega losowości AI)</label>
+                  <input type="text" className="w-full p-3 bg-emerald-50 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-emerald-900" value={data.ethnicity.pl} onChange={(e) => handleManualInput('ethnicity', e.target.value)} />
+                  <SuggestionChips field="ethnicity" options={[
+                    { pl: "typowy Europejczyk z Europy środkowej", en: "typical Central European appearance" },
+                    { pl: "słowiańska uroda, jasna karnacja", en: "Slavic features, fair skin, Caucasian" },
+                    { pl: "uniwersalna europejska uroda", en: "standard European look" },
+                    { pl: "różnorodne pochodzenie (wielokulturowe)", en: "diverse multicultural background" }
+                  ]} />
+                </div>
+
+                {/* STYL / MEDIUM */}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1"><Layers className="w-3 h-3"/> Styl i Technika</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-fuchsia-500 outline-none transition-all" value={data.medium.pl} onChange={(e) => handleManualInput('medium', e.target.value)} />
+                  <SuggestionChips field="medium" options={[
+                    { pl: "ilustracja 3D w stylu Disney Pixar", en: "3D Disney Pixar style illustration" },
+                    { pl: "styl anime Studio Ghibli", en: "Studio Ghibli anime style" },
+                    { pl: "akwarela z książki dla dzieci", en: "watercolor children's book illustration" },
+                    { pl: "fotorealistyczne zdjęcie", en: "photorealistic cinematic photography" }
+                  ]} />
+                </div>
+
+                {/* OTOCZENIE */}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1"><LayoutTemplate className="w-3 h-3"/> Tło i Otoczenie</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-fuchsia-500 outline-none transition-all" value={data.environment.pl} onChange={(e) => handleManualInput('environment', e.target.value)} />
+                  <SuggestionChips field="environment" options={[
+                    { pl: "kolorowa sala przedszkolna", en: "colorful preschool classroom" },
+                    { pl: "magiczny, zaczarowany las", en: "magical enchanted forest" },
+                    { pl: "słoneczny park z placem zabaw", en: "sunny park with a playground" },
+                    { pl: "czyste, pastelowe tło", en: "clean pastel background" }
+                  ]} />
+                </div>
+
+                {/* PARAMETRY NEGATYWNE */}
+                <div>
+                  <label className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1.5 flex items-center gap-1"><Ban className="w-3 h-3"/> Czego unikać? (Negative Prompt)</label>
+                  <input type="text" className="w-full p-3 bg-red-50 border border-red-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all text-red-900" value={data.negative.pl} onChange={(e) => handleManualInput('negative', e.target.value)} />
+                  <SuggestionChips field="negative" options={[
+                    { pl: "napisy, tekst, litery, tablice z tekstem, logo, znaki wodne", en: "text, letters, fonts, signboards, watermarks, logo, signatures" },
+                    { pl: "zniekształcone twarze, zła anatomia, potwory", en: "deformed faces, bad anatomy, ugly, scary" },
+                    { pl: "dorośli, mrok, przemoc", en: "adults, darkness, violence, sad" }
+                  ]} />
+                </div>
+              </div>
+
+              {/* PRAWY PANEL WYNIKOWY (PRZEŁĄCZANIE JĘZYKA) */}
+              <div className="w-full md:w-1/2 flex flex-col gap-4">
+                <div className="bg-gradient-to-br from-fuchsia-900 to-slate-900 rounded-2xl p-6 shadow-xl text-white flex-1 flex flex-col relative overflow-hidden">
+                  <ImageIcon className="absolute -right-10 -bottom-10 w-48 h-48 text-fuchsia-500 opacity-10" />
+                  
+                  <div className="flex justify-between items-start mb-4 relative z-10">
+                    <h2 className="text-lg font-black text-fuchsia-300 flex items-center gap-2">
+                      <Wand2 className="w-5 h-5" /> Twój Gotowy Prompt:
+                    </h2>
+                    <LanguageToggle lang={lang} setLang={setLang} />
+                  </div>
+                  
+                  <div className="bg-slate-900/60 p-5 rounded-xl border border-fuchsia-500/30 flex-1 font-mono text-base leading-relaxed text-fuchsia-50 mb-6 overflow-y-auto whitespace-pre-wrap relative z-10">
+                    {generatePrompt()}
+                  </div>
+                  
+                  <button onClick={handleCopy} className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 relative z-10 ${copied ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-fuchsia-500 hover:bg-fuchsia-400 text-white shadow-lg shadow-fuchsia-500/30'}`}>
+                    {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />} {copied ? "Skopiowano do schowka!" : `Kopiuj Prompt (${lang.toUpperCase()})`}
+                  </button>
+                </div>
+                
+                <div className="bg-fuchsia-50 border border-fuchsia-100 p-4 rounded-2xl text-sm text-fuchsia-800 flex items-start gap-3 shadow-sm">
+                  <Lightbulb className="w-5 h-5 shrink-0 mt-0.5 text-fuchsia-600" />
+                  <p><b>Porada:</b> DALL-E (ChatGPT) oraz Bing świetnie radzą sobie z językiem Polskim. Jeśli używasz <b>Midjourney, Leonardo AI</b> lub <b>Adobe Firefly</b>, kliknij <b>English</b> nad oknem promptu!</p>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+
+        // --- KOMPONENT 2: GENERATOR PROMPTÓW WIDEO AI ---
+        const VideoPromptGenerator = () => {
+          const [copied, setCopied] = useState(false);
+          const [lang, setLang] = useState('pl');
+
+          const [data, setData] = useState({
+            subject: { 
+              pl: "urocze dziecko przedszkolne odkrywające świat", 
+              en: "cute preschool child exploring the world" 
+            },
+            ethnicity: { 
+              pl: "europejski wygląd, słowiańska uroda, środkowa Europa", 
+              en: "European appearance, Slavic features, Central Europe, Caucasian" 
+            },
+            motion: { 
+              pl: "dziecko powoli idzie, rozgląda się z zachwytem i uśmiecha", 
+              en: "child walks slowly, looks around with wonder and smiles" 
+            },
+            setting: { 
+              pl: "magiczny, zaczarowany las ze świecącymi grzybami", 
+              en: "magical enchanted forest with glowing mushrooms" 
+            },
+            camera: { 
+              pl: "powolne, kinowe przesunięcie kamery od lewej do prawej", 
+              en: "slow cinematic camera pan from left to right" 
+            },
+            style: { 
+              pl: "styl animacji 3D Disney Pixar, kinowe oświetlenie, rozdzielczość 8k", 
+              en: "3D Disney Pixar animation style, cinematic lighting, 8k resolution" 
+            },
+            negative: { 
+              pl: "napisy, tekst na ubraniach, tablice, zniekształcone twarze, nagłe ruchy kamery", 
+              en: "text, fonts, signs, writing on clothes, deformed faces, sudden camera jumps" 
+            }
+          });
+
+          const handleManualInput = (field, value) => {
+            setData(prev => ({ ...prev, [field]: { pl: value, en: value } }));
+          };
+
+          const handleChipClick = (field, opt) => {
+            setData(prev => ({ ...prev, [field]: { pl: opt.pl, en: opt.en } }));
+          };
+
+          const generatePrompt = () => {
+            if (lang === 'pl') {
+              let p = `${data.style.pl}, obiekt: ${data.subject.pl} (wygląd: ${data.ethnicity.pl}), akcja: ${data.motion.pl}, sceneria: ${data.setting.pl}, praca kamery: ${data.camera.pl}.`;
+              if (data.negative.pl) p += `\n\n(INSTRUKCJA - CZEGO UNIKAĆ: ${data.negative.pl})`;
+              return p;
+            } else {
+              let p = `${data.style.en}, ${data.subject.en} (${data.ethnicity.en}) in ${data.setting.en}, action: ${data.motion.en}, camera: ${data.camera.en}.`;
+              if (data.negative.en) p += `\n\nNEGATIVE PROMPT: ${data.negative.en}`;
+              return p;
+            }
+          };
+
+          const handleCopy = () => {
+            navigator.clipboard.writeText(generatePrompt());
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          };
+
+          const SuggestionChips = ({ field, options }) => (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {options.map((opt, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleChipClick(field, opt)}
+                  className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-full hover:bg-indigo-500 hover:text-white transition-all duration-200"
+                >
+                  {opt.pl}
+                </button>
+              ))}
+            </div>
+          );
+
+          return (
+            <div className="w-full h-full flex flex-col md:flex-row gap-6 overflow-hidden">
+              {/* LEWY PANEL */}
+              <div className="w-full md:w-1/2 bg-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col gap-5 overflow-y-auto custom-scrollbar">
+                
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-2 border-b border-gray-100 pb-4">
+                  <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                    <Film className="w-6 h-6 text-indigo-500" /> Kreator Ujęć Wideo
+                  </h2>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1"><PenTool className="w-3 h-3"/> Główny Bohater / Obiekt</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={data.subject.pl} onChange={(e) => handleManualInput('subject', e.target.value)} />
+                  <SuggestionChips field="subject" options={[
+                    { pl: "urocze dziecko przedszkolne", en: "cute preschool child" },
+                    { pl: "nauczycielka w przedszkolu", en: "preschool female teacher" },
+                    { pl: "przyjazny robot edukacyjny", en: "friendly educational robot" }
+                  ]} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1.5 flex items-center gap-1"><Globe className="w-3 h-3"/> Pochodzenie (Ważne dla wideo)</label>
+                  <input type="text" className="w-full p-3 bg-emerald-50 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-emerald-900" value={data.ethnicity.pl} onChange={(e) => handleManualInput('ethnicity', e.target.value)} />
+                  <SuggestionChips field="ethnicity" options={[
+                    { pl: "typowy Europejczyk z Europy środkowej", en: "typical Central European appearance" },
+                    { pl: "słowiańska uroda, jasna karnacja", en: "Slavic features, fair skin, Caucasian" },
+                    { pl: "uniwersalna europejska uroda", en: "standard European look" }
+                  ]} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1"><MousePointerClick className="w-3 h-3"/> Akcja i Ruch Obiektu</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={data.motion.pl} onChange={(e) => handleManualInput('motion', e.target.value)} />
+                  <SuggestionChips field="motion" options={[
+                    { pl: "powoli idzie i rozgląda się z zachwytem", en: "walks slowly and looks around with wonder" },
+                    { pl: "radośnie macha do kamery i uśmiecha się", en: "waves happily to the camera and smiles" },
+                    { pl: "wiatr delikatnie porusza włosami (subtelny ruch)", en: "wind gently moves the hair (subtle motion)" }
+                  ]} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1"><LayoutTemplate className="w-3 h-3"/> Sceneria</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={data.setting.pl} onChange={(e) => handleManualInput('setting', e.target.value)} />
+                  <SuggestionChips field="setting" options={[
+                    { pl: "futurystyczna sala lekcyjna", en: "futuristic classroom" },
+                    { pl: "magiczny, zaczarowany las", en: "magical enchanted forest" },
+                    { pl: "przytulna biblioteka pełna książek", en: "cozy library full of books" }
+                  ]} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1"><Camera className="w-3 h-3"/> Praca Kamery</label>
+                  <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={data.camera.pl} onChange={(e) => handleManualInput('camera', e.target.value)} />
+                  <SuggestionChips field="camera" options={[
+                    { pl: "powolne, kinowe przesunięcie od lewej do prawej", en: "slow cinematic pan from left to right" },
+                    { pl: "powolne zbliżenie na twarz bohatera", en: "slow zoom in on the character's face" },
+                    { pl: "statyczne ujęcie, rusza się tylko tło", en: "static shot, only the background moves slightly" }
+                  ]} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1.5 flex items-center gap-1"><Ban className="w-3 h-3"/> Czego unikać w wideo?</label>
+                  <input type="text" className="w-full p-3 bg-red-50 border border-red-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all text-red-900" value={data.negative.pl} onChange={(e) => handleManualInput('negative', e.target.value)} />
+                  <SuggestionChips field="negative" options={[
+                    { pl: "napisy, tekst na ubraniach, znaki wodne, tablice", en: "text, fonts, signs, writing on clothes, watermarks" },
+                    { pl: "nagłe ruchy kamery, morfowanie postaci, błędy wideo", en: "sudden camera jumps, character morphing, video artifacts" }
+                  ]} />
+                </div>
+              </div>
+
+              {/* PRAWY PANEL */}
+              <div className="w-full md:w-1/2 flex flex-col gap-4">
+                <div className="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-2xl p-6 shadow-xl text-white flex-1 flex flex-col relative overflow-hidden">
+                  <Video className="absolute -right-10 -bottom-10 w-48 h-48 text-indigo-500 opacity-10" />
+                  
+                  <div className="flex justify-between items-start mb-4 relative z-10">
+                    <h2 className="text-lg font-black text-indigo-300 flex items-center gap-2">
+                      <Wand2 className="w-5 h-5" /> Twój Gotowy Prompt:
+                    </h2>
+                    <LanguageToggle lang={lang} setLang={setLang} />
+                  </div>
+                  
+                  <div className="bg-slate-900/60 p-5 rounded-xl border border-indigo-500/30 flex-1 font-mono text-base leading-relaxed text-indigo-50 mb-6 overflow-y-auto whitespace-pre-wrap relative z-10">
+                    {generatePrompt()}
+                  </div>
+                  
+                  <button onClick={handleCopy} className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 relative z-10 ${copied ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg shadow-indigo-500/30'}`}>
+                    {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />} {copied ? "Skopiowano do schowka!" : `Kopiuj Prompt (${lang.toUpperCase()})`}
+                  </button>
+                </div>
+                
+                <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl text-sm text-indigo-800 flex items-start gap-3 shadow-sm">
+                  <Lightbulb className="w-5 h-5 shrink-0 mt-0.5 text-indigo-600" />
+                  <p>Najlepsze modele wideo jak <b>Runway Gen-2</b>, <b>Luma</b> i <b>Kling AI</b> wymagają poleceń w języku <b>Angielskim (EN)</b>. Zawsze wklejaj tam angielską wersję, uwzględniając "Negative Prompt", by uniknąć napisów na filmie!</p>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+
+        // --- KOMPONENT 3: INTERAKTYWNA GRA (BEZ ZMIAN) ---
+        const PreschoolGame = () => {
+          const [score, setScore] = useState(0);
+          const [currentItem, setCurrentItem] = useState(null);
+          const [message, setMessage] = useState("Gdzie to wrzucimy?");
+          const [isAnimating, setIsAnimating] = useState(false);
+          const [status, setStatus] = useState('idle');
+
+          const items = [
+            { id: 1, emoji: "🍎", type: "bio", name: "Ogryzek" }, { id: 2, emoji: "📰", type: "papier", name: "Stara Gazeta" },
+            { id: 3, emoji: "🧴", type: "plastik", name: "Plastikowa Butelka" }, { id: 4, emoji: "🍌", type: "bio", name: "Skórka z Banana" },
+            { id: 5, emoji: "📦", type: "papier", name: "Karton" }, { id: 6, emoji: "🥫", type: "plastik", name: "Puszka po soku" },
+            { id: 7, emoji: "🥤", type: "plastik", name: "Plastikowy Kubek" }, { id: 8, emoji: "🍂", type: "bio", name: "Suche Liście" },
+          ];
+
+          const bins = [
+            { id: "papier", color: "bg-blue-500", hover: "hover:bg-blue-400", label: "PAPIER", shadow: "shadow-blue-500/50" },
+            { id: "plastik", color: "bg-yellow-400", hover: "hover:bg-yellow-300", label: "PLASTIK / METAL", shadow: "shadow-yellow-500/50" },
+            { id: "bio", color: "bg-amber-700", hover: "hover:bg-amber-600", label: "BIO", shadow: "shadow-amber-700/50" },
+          ];
+
+          useEffect(() => { pickRandomItem(); }, []);
+
+          const pickRandomItem = () => {
+            const random = items[Math.floor(Math.random() * items.length)];
+            setCurrentItem(random); setStatus('idle'); setMessage("Gdzie to wrzucimy?");
+            setIsAnimating(true); setTimeout(() => setIsAnimating(false), 500);
+          };
+
+          const handleBinClick = (binId) => {
+            if (status === 'correct') return;
+            if (binId === currentItem.type) {
+              setStatus('correct'); setScore(s => s + 1); setMessage("Brawo! Jesteś Eko-Bohaterem!");
+              setTimeout(pickRandomItem, 1500);
+            } else {
+              setStatus('wrong'); setMessage("Oj, to chyba nie ten kosz. Spróbuj jeszcze raz!");
+              setTimeout(() => setStatus('idle'), 1000);
+            }
+          };
+
+          return (
+            <div className="w-full h-full bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-100 flex flex-col relative">
+              <div className="bg-emerald-50 border-b border-emerald-100 p-4 flex justify-between items-center z-10">
+                <h2 className="text-lg font-black text-emerald-900 flex items-center gap-2">
+                  <PartyPopper className="w-5 h-5 text-emerald-500" /> Eko-Segregacja
+                </h2>
+                <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-emerald-100 flex items-center gap-2 font-black text-emerald-600">
+                  <Trophy className="w-5 h-5 text-yellow-500" /> Punkty: {score}
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col items-center justify-around p-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] overflow-y-auto">
+                <div className={`text-xl font-bold px-6 py-3 rounded-full transition-all duration-300 ${status === 'correct' ? 'bg-emerald-100 text-emerald-700 scale-110' : status === 'wrong' ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-white text-slate-600 shadow-sm'}`}>
+                  {message}
+                </div>
+                <div className="relative h-40 flex items-center justify-center shrink-0">
+                  {currentItem && (
+                    <div className={`flex flex-col items-center transition-transform duration-300 ${isAnimating ? 'scale-0' : 'scale-100'} ${status === 'correct' ? 'scale-0 opacity-0' : ''} ${status === 'wrong' ? '-translate-x-2' : 'animate-bounce'}`}>
+                      <span className="text-[90px] leading-none drop-shadow-xl filter">{currentItem.emoji}</span>
+                      <span className="mt-4 font-black text-slate-700 bg-white/80 px-4 py-1 rounded-full text-sm uppercase tracking-wider backdrop-blur-sm shadow-sm">{currentItem.name}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-4 md:gap-8 w-full justify-center px-4 mt-4">
+                  {bins.map((bin) => (
+                    <button key={bin.id} onClick={() => handleBinClick(bin.id)} className={`flex flex-col items-center justify-end w-24 md:w-36 h-28 md:h-36 rounded-t-2xl rounded-b-lg shadow-lg border-b-8 border-black/20 transform transition-all duration-200 active:scale-95 active:border-b-0 active:translate-y-2 shrink-0 ${bin.color} ${bin.hover} ${bin.shadow}`}>
+                      <div className="w-full bg-black/10 h-6 md:h-8 mb-auto rounded-t-2xl flex items-center justify-center"><div className="w-1/2 h-2 bg-black/20 rounded-full"></div></div>
+                      <span className="font-black text-white text-[10px] md:text-sm mb-4 px-2 text-center drop-shadow-md">{bin.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+
+        // --- KOMPONENT 4: INTERAKTYWNA ANIMACJA CANVAS (BEZ ZMIAN) ---
+        const ParticleAnimation = () => {
+          const canvasRef = useRef(null);
+
+          useEffect(() => {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            let particlesArray = [];
+            let animationFrameId;
+
+            const resizeCanvas = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; init(); };
+            let mouse = { x: null, y: null, radius: 150 };
+
+            const handleMouseMove = (e) => { const rect = canvas.getBoundingClientRect(); mouse.x = e.clientX - rect.left; mouse.y = e.clientY - rect.top; };
+            const handleMouseOut = () => { mouse.x = undefined; mouse.y = undefined; };
+
+            window.addEventListener('resize', resizeCanvas);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseout', handleMouseOut);
+
+            class Particle {
+              constructor(x, y, dx, dy, size, color) { this.x = x; this.y = y; this.dx = dx; this.dy = dy; this.size = size; this.color = color; }
+              draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false); ctx.fillStyle = this.color; ctx.fill(); }
+              update() {
+                if (this.x > canvas.width || this.x < 0) this.dx = -this.dx;
+                if (this.y > canvas.height || this.y < 0) this.dy = -this.dy;
+                let dx = mouse.x - this.x; let dy = mouse.y - this.y; let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < mouse.radius + this.size) {
+                  if (mouse.x < this.x && this.x < canvas.width - this.size * 10) this.x += 3;
+                  if (mouse.x > this.x && this.x > this.size * 10) this.x -= 3;
+                  if (mouse.y < this.y && this.y < canvas.height - this.size * 10) this.y += 3;
+                  if (mouse.y > this.y && this.y > this.size * 10) this.y -= 3;
+                }
+                this.x += this.dx; this.y += this.dy; this.draw();
+              }
+            }
+
+            const init = () => {
+              particlesArray = [];
+              let numberOfParticles = (canvas.width * canvas.height) / 9000;
+              for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 1;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                particlesArray.push(new Particle(x, y, (Math.random() * 2) - 1, (Math.random() * 2) - 1, size, '#6366f1'));
+              }
+            };
+
+            const connect = () => {
+              for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                  let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x)) + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                  if (distance < (canvas.width / 7) * (canvas.height / 7)) {
+                    ctx.strokeStyle = `rgba(99, 102, 241, ${1 - (distance / 20000)})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(particlesArray[a].x, particlesArray[a].y); ctx.lineTo(particlesArray[b].x, particlesArray[b].y); ctx.stroke();
+                  }
+                }
+              }
+            };
+
+            const animate = () => { animationFrameId = requestAnimationFrame(animate); ctx.clearRect(0, 0, canvas.width, canvas.height); for (let i = 0; i < particlesArray.length; i++) particlesArray[i].update(); connect(); };
+            resizeCanvas(); animate();
+
+            return () => { window.removeEventListener('resize', resizeCanvas); canvas.removeEventListener('mousemove', handleMouseMove); canvas.removeEventListener('mouseout', handleMouseOut); cancelAnimationFrame(animationFrameId); };
+          }, []);
+
+          return (
+            <div className="w-full h-full relative bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
+              <canvas ref={canvasRef} className="w-full h-full absolute inset-0 z-0" />
+              <div className="absolute bottom-6 left-6 z-10 pointer-events-none">
+                <div className="bg-slate-800/80 backdrop-blur-md p-4 rounded-xl border border-slate-700 text-slate-200">
+                  <h3 className="font-bold flex items-center gap-2 mb-1"><Sparkles className="w-4 h-4 text-indigo-400" /> Magiczne Atomy</h3>
+                  <p className="text-xs text-slate-400">Przejedź myszką po płótnie, aby wprawić je w ruch.</p>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+
+        // --- GŁÓWNY KONTENER APLIKACJI (KOMBAJN) ---
+        const EduBoxProShowcase = () => {
+          const [activeTab, setActiveTab] = useState('graphic');
+
+          return (
+            <div className="min-h-screen bg-slate-50 font-sans p-4 md:p-8 flex flex-col items-center justify-start overflow-hidden">
+              
+              {/* Zaktualizowany nagłówek z przyciskiem Postaw Kawę */}
+              <div className="w-full max-w-7xl mb-6 flex flex-col xl:flex-row items-center justify-between gap-6">
+                
+                <div className="flex flex-col md:flex-row w-full xl:w-auto items-center justify-between gap-4">
+                  <div className="text-center xl:text-left">
+                    <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight flex items-center justify-center xl:justify-start gap-3">
+                      <div className="bg-gradient-to-br from-indigo-600 to-fuchsia-600 text-white p-2 rounded-xl shadow-lg">
+                        <LayoutTemplate className="w-7 h-7" />
+                      </div>
+                      EduBoxPro Studio
+                    </h1>
+                    <p className="text-slate-500 mt-2 font-medium">Zaawansowany kombajn narzędzi AI i Edukacyjnych</p>
+                  </div>
+                  
+                  {/* Przycisk Postaw Kawę widoczny na mniejszych ekranach pod tytułem, a na dużych na końcu paska */}
+                  <div className="xl:hidden mt-2">
+                    <a href="https://buycoffee.to/magiccolor" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#ffdd00] hover:bg-[#ffea4d] text-slate-800 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all border border-[#f5d400]">
+                      <Coffee className="w-5 h-5" />
+                      Postaw Kawę
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {/* Nawigacja */}
+                  <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-200 flex flex-wrap gap-1 justify-center shrink-0">
+                    <button onClick={() => setActiveTab('graphic')} className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'graphic' ? 'bg-fuchsia-50 text-fuchsia-700 shadow-sm border border-fuchsia-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
+                      <ImageIcon className="w-4 h-4" /> <span className="hidden sm:inline">Grafika AI</span><span className="sm:hidden">Grafika</span>
+                    </button>
+                    <button onClick={() => setActiveTab('video')} className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'video' ? 'bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
+                      <Video className="w-4 h-4" /> <span className="hidden sm:inline">Wideo AI</span><span className="sm:hidden">Wideo</span>
+                    </button>
+                    <div className="w-px bg-gray-200 mx-1 hidden sm:block"></div>
+                    <button onClick={() => setActiveTab('game')} className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'game' ? 'bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
+                      <Gamepad2 className="w-4 h-4" /> <span className="hidden sm:inline">Gra (React)</span><span className="sm:hidden">Gra</span>
+                    </button>
+                    <button onClick={() => setActiveTab('animation')} className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'animation' ? 'bg-slate-800 text-white shadow-sm border border-slate-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
+                      <PlaySquare className="w-4 h-4" /> <span className="hidden sm:inline">Animacja (Canvas)</span><span className="sm:hidden">Canvas</span>
+                    </button>
+                  </div>
+                  
+                  {/* Przycisk Postaw Kawę na dużych ekranach */}
+                  <a href="https://buycoffee.to/magiccolor" target="_blank" rel="noopener noreferrer" className="hidden xl:flex items-center gap-2 bg-[#ffdd00] hover:bg-[#ffea4d] text-slate-800 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all border border-[#f5d400] shrink-0">
+                    <Coffee className="w-5 h-5" />
+                    Postaw Kawę
+                  </a>
+                </div>
+              </div>
+
+              <div className="w-full max-w-7xl h-[calc(100vh-180px)] min-h-[600px] transition-all">
+                {activeTab === 'graphic' && <GraphicPromptGenerator />}
+                {activeTab === 'video' && <VideoPromptGenerator />}
+                {activeTab === 'game' && <PreschoolGame />}
+                {activeTab === 'animation' && <ParticleAnimation />}
+              </div>
+            </div>
+          );
+        };
+
+        // URUCHOMIENIE APLIKACJI
+        const root = createRoot(document.getElementById('root'));
+        root.render(<EduBoxProShowcase />);
+    </script>
+</body>
+</html>
